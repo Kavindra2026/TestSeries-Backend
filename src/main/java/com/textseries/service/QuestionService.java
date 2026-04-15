@@ -1,0 +1,76 @@
+package com.textseries.service;
+
+import com.textseries.dto.QuestionDTO;
+import com.textseries.model.Question;
+import com.textseries.repository.QuestionRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+public class QuestionService {
+
+	private final QuestionRepository repo;
+
+	public QuestionService(QuestionRepository repo) {
+		this.repo = repo;
+	}
+
+	// Add Question
+	public Question addQuestion(Question q) {
+		return repo.save(q);
+	}
+
+	public List<Question> getAll() {
+		return repo.findAll();
+	}
+
+	public Question update(Long id, Question updated) {
+
+		Question q = repo.findById(id).orElseThrow(() -> new RuntimeException("Question not found"));
+
+		q.setQuestion(updated.getQuestion());
+		q.setOptionA(updated.getOptionA());
+		q.setOptionB(updated.getOptionB());
+		q.setOptionC(updated.getOptionC());
+		q.setOptionD(updated.getOptionD());
+		q.setCorrectAnswer(updated.getCorrectAnswer());
+		q.setCategory(updated.getCategory());
+
+		return repo.save(q);
+	}
+
+	public void delete(Long id) {
+		repo.deleteById(id);
+	}
+
+	// Get Quiz
+	public List<QuestionDTO> getQuiz(String category, String username) {
+
+	    List<Question> questions = repo.findByCategory(category);
+
+	    if (questions.isEmpty()) {
+	        throw new RuntimeException("No questions found for category: " + category);
+	    }
+
+	    // 🔥 USER BASED RANDOM (same user = same order)
+	    long seed = username.hashCode();
+	    Collections.shuffle(questions, new Random(seed));
+
+	    return questions.stream()
+	            .map(this::convertToDTO)
+	            .collect(Collectors.toList());
+	}
+
+	private QuestionDTO convertToDTO(Question q) {
+		QuestionDTO dto = new QuestionDTO();
+		dto.setId(q.getId());
+		dto.setQuestion(q.getQuestion());
+		dto.setOptionA(q.getOptionA());
+		dto.setOptionB(q.getOptionB());
+		dto.setOptionC(q.getOptionC());
+		dto.setOptionD(q.getOptionD());
+		return dto;
+	}
+}
