@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.textseries.dto.QuestionDTO;
 import com.textseries.model.Question;
+import com.textseries.model.QuestionRequestDTO;
+import com.textseries.model.Test;
+import com.textseries.repository.TestRepository;
 import com.textseries.service.QuestionService;
 
 @RestController
@@ -23,32 +26,52 @@ import com.textseries.service.QuestionService;
 public class QuestionController {
 
 	private final QuestionService service;
+	private final TestRepository testRepo;
 
-	public QuestionController(QuestionService service) {
+	public QuestionController(QuestionService service, TestRepository testRepo) {
 		this.service = service;
+		this.testRepo = testRepo;
 	}
 
+ 
 	@PostMapping
-	public Question add(@RequestBody Question q) {
-		return service.addQuestion(q);
+	public Question add(@RequestBody QuestionRequestDTO dto) {
+
+		   System.out.println("DTO RECEIVED: " + dto);
+		    System.out.println("TEST ID: " + dto.getTestId());
+		
+		
+	    if (dto.getTestId() == null) {
+	        throw new RuntimeException("Test ID missing ❌");
+	    }
+
+	    Test test = testRepo.findById(dto.getTestId())
+	            .orElseThrow(() -> new RuntimeException("Test not found ❌"));
+
+	    Question q = new Question();
+	    q.setQuestion(dto.getQuestion());
+	    q.setOptionA(dto.getOptionA());
+	    q.setOptionB(dto.getOptionB());
+	    q.setOptionC(dto.getOptionC());
+	    q.setOptionD(dto.getOptionD());
+	    q.setCorrectAnswer(dto.getCorrectAnswer());
+	    q.setTest(test);
+
+	    return service.addQuestion(q);
 	}
 
 	@PostMapping("/bulk")
 	public List<Question> addBulk(@RequestBody List<Question> questions) {
-	    return questions.stream()
-	            .map(service::addQuestion)
-	            .toList();
+		return questions.stream().map(service::addQuestion).toList();
 	}
-	
-	@GetMapping("/category/{category}")
-	public List<QuestionDTO> getQuiz(
-	        @PathVariable String category,
-	        Authentication auth) {
 
-	    String studentName= auth.getName();
-	    return service.getQuiz(category, studentName);
+	@GetMapping("/test/{testId}")
+	public List<QuestionDTO> getQuizByTest(@PathVariable Long testId, Authentication auth) {
+
+		String studentName = auth.getName();
+		return service.getQuizByTest(testId, studentName);
 	}
-	
+
 	@PutMapping("/{id}")
 	public Question update(@PathVariable Long id, @RequestBody Question q) {
 		return service.update(id, q);

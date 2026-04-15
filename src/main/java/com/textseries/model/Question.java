@@ -4,6 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +33,10 @@ public class Question {
     private String optionC;
     private String optionD;
     
+ 
     private String correctAnswer;
-    private String category;
+  
+    @ManyToOne
+    @JoinColumn(name = "test_id")
+    private Test test;
 }

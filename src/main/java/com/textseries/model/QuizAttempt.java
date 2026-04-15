@@ -21,8 +21,8 @@ public class QuizAttempt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private Long testId;
 
     private String email;
-    private String category;
     private int attempts;
 }

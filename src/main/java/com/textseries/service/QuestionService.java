@@ -36,7 +36,7 @@ public class QuestionService {
 		q.setOptionC(updated.getOptionC());
 		q.setOptionD(updated.getOptionD());
 		q.setCorrectAnswer(updated.getCorrectAnswer());
-		q.setCategory(updated.getCategory());
+		q.setTest(updated.getTest());
 
 		return repo.save(q);
 	}
@@ -46,21 +46,16 @@ public class QuestionService {
 	}
 
 	// Get Quiz
-	public List<QuestionDTO> getQuiz(String category, String username) {
+	public List<QuestionDTO> getQuizByTest(Long testId, String username) {
 
-	    List<Question> questions = repo.findByCategory(category);
+	    List<Question> questions = repo.findByTestId(testId);
 
-	    if (questions.isEmpty()) {
-	        throw new RuntimeException("No questions found for category: " + category);
-	    }
-
-	    // 🔥 USER BASED RANDOM (same user = same order)
 	    long seed = username.hashCode();
 	    Collections.shuffle(questions, new Random(seed));
 
 	    return questions.stream()
 	            .map(this::convertToDTO)
-	            .collect(Collectors.toList());
+	            .toList();
 	}
 
 	private QuestionDTO convertToDTO(Question q) {
@@ -74,3 +69,4 @@ public class QuestionService {
 		return dto;
 	}
 }
+

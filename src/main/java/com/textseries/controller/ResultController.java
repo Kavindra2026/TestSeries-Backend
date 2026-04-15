@@ -37,7 +37,7 @@ public class ResultController {
 
 	@PostMapping("/analysis")
 	public List<AnalysisDTO> analysis(@RequestBody SubmitRequestDTO request) {
-		return service.getAnalysis(request.getAnswers(), request.getCategory());
+	    return service.getAnalysis(request.getAnswers(), request.getTestId());
 	}
 
 	// 📜 History
@@ -52,11 +52,11 @@ public class ResultController {
 		return service.getUserHistory(email);
 	}
 
-	@GetMapping("/can-attempt/{category}")
-	public boolean canAttempt(Authentication auth, @PathVariable String category) {
-		return service.canAttempt(auth.getName(), category);
+	@GetMapping("/can-attempt/{testId}")
+	public boolean canAttempt(Authentication auth, @PathVariable Long testId) {
+	    return service.canAttempt(auth.getName(), testId);
 	}
-
+	
 	@GetMapping("/admin/analytics")
 	public long totalAttempts() {
 		return service.totalAttempts();

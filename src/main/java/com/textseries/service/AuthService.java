@@ -50,16 +50,17 @@ public class AuthService {
     	    throw new RuntimeException("Email already registered");
     	}
 
-        
         user.setPassword(encoder.encode(user.getPassword()));
         user.setRole("USER");
         user.setVerified(true);
-
         repo.save(user);
- 
         return "Registered successfully";
     }
 
+    public User getUserByEmail(String email) {
+        return repo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
     // 🔥 LOGIN (EMAIL BASED)
     public String login(LoginRequestDTO request) {
 

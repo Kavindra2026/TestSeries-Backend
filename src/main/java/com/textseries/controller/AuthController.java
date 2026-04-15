@@ -29,6 +29,14 @@ public class AuthController {
 
     @PostMapping("/login")
     public AuthResponseDTO login(@RequestBody LoginRequestDTO request) {
-        return new AuthResponseDTO(service.login(request));
+
+        User user = service.getUserByEmail(request.getEmail());  
+        String token = service.login(request);
+
+        return new AuthResponseDTO(
+                token,
+                user.getStudentName(),
+                user.getEmail()
+        );
     }
 }

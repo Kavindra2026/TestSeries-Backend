@@ -8,5 +8,5 @@ import com.textseries.model.QuizAttempt;
 
 public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> {
 
-	Optional<QuizAttempt> findByEmailAndCategory(String email, String category);
+	Optional<QuizAttempt> findByEmailAndTestId(String email, Long testId);
 }

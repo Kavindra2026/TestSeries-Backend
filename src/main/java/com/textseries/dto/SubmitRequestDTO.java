@@ -8,7 +8,7 @@ import java.util.Map;
 public class SubmitRequestDTO {
 
 	private String studentName;
-	private String category;
+	private Long testId;
     private Map<Long, String> answers;
 
     private LocalDateTime startTime; // 🔥 new

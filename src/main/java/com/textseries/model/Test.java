@@ -10,19 +10,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Result {
+public class Test {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String studentName;
-    private String email;
-    private double score;
+    private String testName;   
+    private String subject;
     private int totalQuestions;
-    private int correctAnswers;
-    private int wrongAnswers;
- 
-    private Long testId;
-    private LocalDateTime submittedAt; 
+    private int timeLimit;
+    private boolean active;
+
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 }

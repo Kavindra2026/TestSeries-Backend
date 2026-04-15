@@ -40,76 +40,74 @@ public class ResultService {
 	// 🧠 Submit Test
 	public Result calculateResult(SubmitRequestDTO request) {
 
-	    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-	    if (request.getCategory() == null || request.getCategory().isEmpty()) {
-	        throw new RuntimeException("❌ Category missing");
-	    }
+		if (request.getTestId() == null) {
+			throw new RuntimeException("❌ TestId missing");
+		}
 
-	    if (request.getStartTime() == null) {
-	        throw new RuntimeException("❌ Start time missing");
-	    }
+		if (request.getStartTime() == null) {
+			throw new RuntimeException("❌ Start time missing");
+		}
 
-	    if (!canAttempt(email, request.getCategory())) {
-	        throw new RuntimeException("❌ Attempt limit reached");
-	    }
+		if (!canAttempt(email, request.getTestId())) {
+			throw new RuntimeException("❌ Attempt limit reached");
+		}
 
-	    LocalDateTime now = LocalDateTime.now();
-	    long seconds = Duration.between(request.getStartTime(), now).toSeconds();
+		LocalDateTime now = LocalDateTime.now();
+		long seconds = Duration.between(request.getStartTime(), now).toSeconds();
 
-	    int correct = 0;
-	    int wrong = 0;
+		int correct = 0;
+		int wrong = 0;
 
-	    Map<Long, String> answers = request.getAnswers() != null ? request.getAnswers() : Map.of();
+		Map<Long, String> answers = request.getAnswers() != null ? request.getAnswers() : Map.of();
 
-	    List<Question> allQuestions = questionRepo.findByCategory(request.getCategory());
+		List<Question> allQuestions = questionRepo.findByTestId(request.getTestId());
 
-	    for (Question q : allQuestions) {
-	        String userAns = answers.get(q.getId());
+		for (Question q : allQuestions) {
+			String userAns = answers.get(q.getId());
 
-	        if (userAns == null) wrong++;
-	        else if (q.getCorrectAnswer().equals(userAns)) correct++;
-	        else wrong++;
-	    }
+			if (userAns == null)
+				wrong++;
+			else if (q.getCorrectAnswer().equals(userAns))
+				correct++;
+			else
+				wrong++;
+		}
 
-	    double score = correct - (wrong * 0.25);
+		double score = correct - (wrong * 0.25);
 
-	    User user = userRepo.findByEmail(email)
-	            .orElseThrow(() -> new RuntimeException("User not found"));
+		User user = userRepo.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-	    Result result = Result.builder()
-	            .studentName(user.getStudentName())
-	            .email(user.getEmail())
-	            .score(score)
-	            .totalQuestions(correct + wrong)
-	            .correctAnswers(correct)
-	            .wrongAnswers(wrong)
-	            .category(request.getCategory())
-	            .submittedAt(LocalDateTime.now())
-	            .build();
+		Result result = Result.builder().studentName(user.getStudentName()).email(user.getEmail()).score(score)
+				.totalQuestions(correct + wrong).correctAnswers(correct).wrongAnswers(wrong).testId(request.getTestId())
+				.submittedAt(LocalDateTime.now()).build();
 
-	    Result saved = resultRepo.save(result);
+		Result saved = resultRepo.save(result);
 
-	    increaseAttempt(email, request.getCategory());
+		increaseAttempt(email, request.getTestId());
 
-	    return saved;
+		return saved;
 	}
-	public List<AnalysisDTO> getAnalysis(Map<Long, String> answers, String category){
+
+	public List<AnalysisDTO> getAnalysis(Map<Long, String> answers, Long testId) {
 
 		Map<Long, String> safeAnswers = answers != null ? answers : Map.of();
 
 		List<AnalysisDTO> list = new ArrayList<>();
-		if (category == null || category.isEmpty()) {
-		    throw new RuntimeException("❌ Category missing in analysis");
+
+		if (testId == null) {
+			throw new RuntimeException("❌ TestId missing in analysis");
 		}
 
-		List<Question> allQuestions = questionRepo.findByCategory(category);
+		List<Question> allQuestions = questionRepo.findByTestId(testId);
 
 		if (allQuestions.isEmpty()) {
-		    throw new RuntimeException("❌ No questions found for category: " + category);
+			throw new RuntimeException("❌ No questions found for testId: " + testId);
 		}
-		System.out.println("CATEGORY RECEIVED: " + category);
-		
+
+		System.out.println("TEST ID RECEIVED: " + testId);
+
 		for (Question q : allQuestions) {
 
 			String userAns = safeAnswers.get(q.getId());
@@ -124,9 +122,8 @@ public class ResultService {
 		return list;
 	}
 
-
-	public boolean canAttempt(String email, String category) {
-		QuizAttempt attempt = attemptRepo.findByEmailAndCategory(email, category).orElse(null);
+	public boolean canAttempt(String email, Long testId) {
+		QuizAttempt attempt = attemptRepo.findByEmailAndTestId(email, testId).orElse(null);
 
 		if (attempt == null)
 			return true;
@@ -134,17 +131,18 @@ public class ResultService {
 		return attempt.getAttempts() < 20;
 	}
 
-	public void increaseAttempt(String email, String category) {
-		QuizAttempt attempt = attemptRepo.findByEmailAndCategory(email, category)
-				.orElse(QuizAttempt.builder().email(email).category(category).attempts(0).build());
+	public void increaseAttempt(String email, Long testId) {
+		QuizAttempt attempt = attemptRepo.findByEmailAndTestId(email, testId)
+				.orElse(QuizAttempt.builder().email(email).testId(testId).attempts(0).build());
 
 		attempt.setAttempts(attempt.getAttempts() + 1);
 		attemptRepo.save(attempt);
 	}
 
 	public long totalAttempts() {
-	    return resultRepo.count();
+		return resultRepo.count();
 	}
+
 	// 🏆 Leaderboard
 	public List<Result> getLeaderboard() {
 		return resultRepo.findBestScores();

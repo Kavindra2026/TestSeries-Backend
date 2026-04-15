@@ -2,7 +2,7 @@ package com.textseries.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -28,17 +28,19 @@ public class SecurityConfig {
 		})).csrf(csrf -> csrf.disable()).authorizeHttpRequests(auth -> auth
 
 				// 🔓 PUBLIC
-				.requestMatchers("/api/auth/**").permitAll().requestMatchers("/api/result/leaderboard").permitAll()
-
-			
-
+				.requestMatchers("/api/auth/**").permitAll()
+				.requestMatchers("/api/result/leaderboard").permitAll()
+ 
 				// 🔐 USER
-				.requestMatchers("/api/questions/category/**").authenticated().requestMatchers("/api/result/**")
-				.authenticated()
+				.requestMatchers(HttpMethod.GET, "/api/tests/active").authenticated()
+				.requestMatchers("/api/questions/test/**").authenticated()
+				.requestMatchers("/api/result/**").authenticated()
 				
 				// 🔐 ADMIN
-				.requestMatchers("/api/questions/**").hasRole("ADMIN").requestMatchers("/api/result/admin/**")
-				.hasRole("ADMIN")
+			    .requestMatchers(HttpMethod.POST, "/api/tests").hasRole("ADMIN") 
+			    .requestMatchers(HttpMethod.GET, "/api/tests").hasRole("ADMIN") 
+				.requestMatchers("/api/questions/**").hasRole("ADMIN")
+				.requestMatchers("/api/result/admin/**").hasRole("ADMIN")
 
 				.anyRequest().authenticated()).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 				.formLogin(form -> form.disable()).httpBasic(basic -> basic.disable());
