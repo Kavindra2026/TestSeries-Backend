@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+ 
 import org.springframework.web.bind.annotation.RestController;
 
 import com.textseries.dto.QuestionDTO;
@@ -33,31 +33,28 @@ public class QuestionController {
 		this.testRepo = testRepo;
 	}
 
- 
 	@PostMapping
 	public Question add(@RequestBody QuestionRequestDTO dto) {
 
-		   System.out.println("DTO RECEIVED: " + dto);
-		    System.out.println("TEST ID: " + dto.getTestId());
-		
-		
-	    if (dto.getTestId() == null) {
-	        throw new RuntimeException("Test ID missing ❌");
-	    }
+		System.out.println("DTO RECEIVED: " + dto);
+		System.out.println("TEST ID: " + dto.getTestId());
 
-	    Test test = testRepo.findById(dto.getTestId())
-	            .orElseThrow(() -> new RuntimeException("Test not found ❌"));
+		if (dto.getTestId() == null) {
+			throw new RuntimeException("Test ID missing ❌");
+		}
 
-	    Question q = new Question();
-	    q.setQuestion(dto.getQuestion());
-	    q.setOptionA(dto.getOptionA());
-	    q.setOptionB(dto.getOptionB());
-	    q.setOptionC(dto.getOptionC());
-	    q.setOptionD(dto.getOptionD());
-	    q.setCorrectAnswer(dto.getCorrectAnswer());
-	    q.setTest(test);
+		Test test = testRepo.findById(dto.getTestId()).orElseThrow(() -> new RuntimeException("Test not found ❌"));
 
-	    return service.addQuestion(q);
+		Question q = new Question();
+		q.setQuestion(dto.getQuestion());
+		q.setOptionA(dto.getOptionA());
+		q.setOptionB(dto.getOptionB());
+		q.setOptionC(dto.getOptionC());
+		q.setOptionD(dto.getOptionD());
+		q.setCorrectAnswer(dto.getCorrectAnswer());
+		q.setTest(test);
+
+		return service.addQuestion(q);
 	}
 
 	@PostMapping("/bulk")
@@ -68,10 +65,9 @@ public class QuestionController {
 	@GetMapping("/test/{testId}")
 	public List<QuestionDTO> getQuizByTest(@PathVariable Long testId, Authentication auth) {
 
-		String studentName = auth.getName();
+		String studentName = (auth != null) ? auth.getName() : "guest";
 		return service.getQuizByTest(testId, studentName);
 	}
-
 	@PutMapping("/{id}")
 	public Question update(@PathVariable Long id, @RequestBody Question q) {
 		return service.update(id, q);

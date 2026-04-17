@@ -3,6 +3,8 @@ package com.textseries.service;
 import com.textseries.dto.QuestionDTO;
 import com.textseries.model.Question;
 import com.textseries.repository.QuestionRepository;
+import com.textseries.repository.TestRepository;
+
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -13,8 +15,9 @@ public class QuestionService {
 
 	private final QuestionRepository repo;
 
-	public QuestionService(QuestionRepository repo) {
-		this.repo = repo;
+ 
+	public QuestionService(QuestionRepository repo ) {
+	    this.repo = repo;
 	}
 
 	// Add Question
@@ -50,8 +53,7 @@ public class QuestionService {
 
 	    List<Question> questions = repo.findByTestId(testId);
 
-	    long seed = username.hashCode();
-	    Collections.shuffle(questions, new Random(seed));
+	    Collections.shuffle(questions, new Random(Objects.hash(username, testId)));
 
 	    return questions.stream()
 	            .map(this::convertToDTO)

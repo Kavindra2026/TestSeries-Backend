@@ -2,8 +2,7 @@ package com.textseries.service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
-
-import com.textseries.config.CorsConfig;
+ 
 import com.textseries.config.JwtUtil;
 import com.textseries.dto.LoginRequestDTO;
 import com.textseries.model.User;
@@ -12,8 +11,7 @@ import com.textseries.store.OtpStore;
 
 @Service
 public class AuthService {
-
-    private final CorsConfig corsConfig;
+ 
 
     private final UserRepository repo;
     private final JwtUtil jwtUtil;
@@ -21,11 +19,11 @@ public class AuthService {
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    public AuthService(UserRepository repo, JwtUtil jwtUtil, EmailService emailService, CorsConfig corsConfig) {
+    public AuthService(UserRepository repo, JwtUtil jwtUtil, EmailService emailService) {
         this.repo = repo;
         this.jwtUtil = jwtUtil;
         this.emailService = emailService;
-        this.corsConfig = corsConfig;
+   
     }
 
     // 🔥 SEND OTP

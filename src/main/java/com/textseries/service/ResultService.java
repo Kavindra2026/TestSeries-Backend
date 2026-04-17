@@ -5,10 +5,12 @@ import com.textseries.dto.SubmitRequestDTO;
 import com.textseries.model.Question;
 import com.textseries.model.QuizAttempt;
 import com.textseries.model.Result;
+import com.textseries.model.Test;
 import com.textseries.model.User;
 import com.textseries.repository.QuestionRepository;
 import com.textseries.repository.QuizAttemptRepository;
 import com.textseries.repository.ResultRepository;
+import com.textseries.repository.TestRepository;
 import com.textseries.repository.UserRepository;
 
 import org.springframework.stereotype.Service;
@@ -16,7 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,14 +29,16 @@ public class ResultService {
 	private final QuestionRepository questionRepo;
 	private final ResultRepository resultRepo;
 	private final UserRepository userRepo;
+	private final TestRepository testRepo;
 	private final QuizAttemptRepository attemptRepo;
 
 	public ResultService(QuestionRepository questionRepo, ResultRepository resultRepo, UserRepository userRepo,
-			QuizAttemptRepository attemptRepo) {
+			TestRepository testRepo, QuizAttemptRepository attemptRepo) {
 		this.questionRepo = questionRepo;
 		this.resultRepo = resultRepo;
 		this.userRepo = userRepo;
 		this.attemptRepo = attemptRepo;
+		this.testRepo = testRepo;
 	}
 
 	// 🧠 Submit Test
@@ -46,17 +50,39 @@ public class ResultService {
 			throw new RuntimeException("❌ TestId missing");
 		}
 
-		if (request.getStartTime() == null) {
-			throw new RuntimeException("❌ Start time missing");
-		}
-
 		if (!canAttempt(email, request.getTestId())) {
 			throw new RuntimeException("❌ Attempt limit reached");
 		}
 
-		LocalDateTime now = LocalDateTime.now();
-		long seconds = Duration.between(request.getStartTime(), now).toSeconds();
+		Test test = testRepo.findById(request.getTestId()).orElseThrow(() -> new RuntimeException("Test not found"));
 
+		QuizAttempt attempt = attemptRepo.findByEmailAndTestId(email, request.getTestId())
+				.orElseThrow(() -> new RuntimeException("❌ Start time not found"));
+
+		OffsetDateTime start = attempt.getStartTime();
+
+		if (start == null) {
+			throw new RuntimeException("❌ Test not started properly");
+		}
+
+		OffsetDateTime now = OffsetDateTime.now();
+
+		System.out.println("START: " + start);
+		System.out.println("NOW: " + now);
+
+		long seconds = Duration.between(start, now).toSeconds();
+		System.out.println("SECONDS: " + seconds);
+		System.out.println("ALLOWED: " + (test.getTimeLimit() * 60));
+
+		long allowedTime = test.getTimeLimit() * 60;
+
+		OffsetDateTime endTime = start.plusSeconds(test.getTimeLimit() * 60);
+
+		boolean timeOver = OffsetDateTime.now().isAfter(endTime);
+
+		if (timeOver) {
+		    System.out.println("⏰ Time Over - Auto Submit");
+		}
 		int correct = 0;
 		int wrong = 0;
 
@@ -123,12 +149,22 @@ public class ResultService {
 	}
 
 	public boolean canAttempt(String email, Long testId) {
-		QuizAttempt attempt = attemptRepo.findByEmailAndTestId(email, testId).orElse(null);
 
-		if (attempt == null)
-			return true;
+	    QuizAttempt attempt = attemptRepo
+	        .findByEmailAndTestId(email, testId)
+	        .orElse(null);
 
-		return attempt.getAttempts() < 20;
+	    if (attempt == null) {
+	        attempt = QuizAttempt.builder()
+	            .email(email)
+	            .testId(testId)
+	            .attempts(0)
+	            .build();
+
+	        attemptRepo.save(attempt);
+	    }
+
+	    return attempt.getAttempts() < 20;  
 	}
 
 	public void increaseAttempt(String email, Long testId) {
@@ -149,13 +185,11 @@ public class ResultService {
 	}
 
 	public double getAverageScore() {
-		return resultRepo.findAll().stream().mapToDouble(Result::getScore) // ✅ correct
-				.average().orElse(0);
+		return resultRepo.findAll().stream().mapToDouble(Result::getScore).average().orElse(0);
 	}
 
 	public Result getTopper() {
-		return resultRepo.findAll().stream().max((a, b) -> Double.compare(a.getScore(), b.getScore())) // ✅
-				.orElse(null);
+		return resultRepo.findAll().stream().max((a, b) -> Double.compare(a.getScore(), b.getScore())).orElse(null);
 	}
 
 	public List<Result> getRecent() {

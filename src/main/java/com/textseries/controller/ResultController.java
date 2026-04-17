@@ -3,7 +3,6 @@ package com.textseries.controller;
 import com.textseries.dto.AnalysisDTO;
 import com.textseries.dto.SubmitRequestDTO;
 import com.textseries.model.Result;
-import com.textseries.repository.ResultRepository;
 import com.textseries.service.ResultService;
 
 import org.springframework.security.core.Authentication;
@@ -22,10 +21,12 @@ public class ResultController {
 		this.service = service;
 	}
 
-	// ✅ Submit
 	@PostMapping
 	public Result submit(@RequestBody SubmitRequestDTO request) {
-		System.out.println("🔥 RESULT API HIT");
+		if (request.getAnswers() == null) {
+		    throw new RuntimeException("Answers missing ❌");
+		}
+		
 		return service.calculateResult(request);
 	}
 

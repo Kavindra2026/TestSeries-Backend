@@ -34,4 +34,17 @@ public class TestService {
         return repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Test not found"));
     }
+    
+    public Test update(Long id, Test updated) {
+        Test t = repo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Test not found"));
+
+        t.setTestName(updated.getTestName());
+        t.setSubject(updated.getSubject());
+        t.setTotalQuestions(updated.getTotalQuestions());
+        t.setTimeLimit(updated.getTimeLimit());
+        t.setActive(updated.isActive());
+
+        return repo.save(t);
+    }
 }
